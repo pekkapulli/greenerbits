@@ -37,15 +37,20 @@
 		}
 	];
 
+	const border = 4;
+
 	$: totalConsumption = items.reduce((sum, item) => sum + item.value, 0);
-	$: isOverBudget = totalConsumption > budget;
+	$: treemapBoxes = calculateTreemap(
+		items,
+		Math.max(budget, totalConsumption),
+		size - 2 * border,
+		size - 2 * border
+	);
 
-	const border = 8;
-	$: treemapBoxes = calculateTreemap(items, budget, size - border, size - border);
-
-	// Calculate the size of the budget overlay box when over budget
+	// Calculate the size of the budget overlay box
 	// The area should be proportional: budgetSize² / size² = budget / totalConsumption
-	$: budgetOverlaySize = isOverBudget ? size * Math.sqrt(budget / totalConsumption) : 0;
+	// Max out at size when budget >= totalConsumption
+	$: budgetOverlaySize = Math.min(size, size * Math.sqrt(budget / totalConsumption));
 </script>
 
 <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
@@ -68,9 +73,7 @@
 
 	<div
 		style="width: {size}px; height: {size}px;"
-		class="box-border bg-white shadow-lg relative overflow-visible border-4 {isOverBudget
-			? 'border-transparent'
-			: 'border-gray-800'}"
+		class="bg-white shadow-lg relative overflow-visible border-{border} border-transparent"
 	>
 		{#each treemapBoxes as box}
 			<div
@@ -88,18 +91,16 @@
 			</div>
 		{/each}
 
-		{#if isOverBudget}
-			<!-- Budget overlay box showing the actual sustainable budget size -->
-			<div
-				style="
-					position: absolute;
-					left: {(size - budgetOverlaySize) / 2 - border / 2}px;
-					top: {(size - budgetOverlaySize) / 2 - border / 2}px;
-					width: {budgetOverlaySize}px;
-					height: {budgetOverlaySize}px;
-				"
-				class="border-4 border-gray-800 pointer-events-none"
-			></div>
-		{/if}
+		<!-- Budget overlay box showing the target budget size -->
+		<div
+			style="
+				position: absolute;
+				left: {(size - budgetOverlaySize) / 2 - border}px;
+				top: {(size - budgetOverlaySize) / 2 - border}px;
+				width: {budgetOverlaySize}px;
+				height: {budgetOverlaySize}px;
+			"
+			class="border-4 border-gray-800 pointer-events-none"
+		></div>
 	</div>
 </div>
