@@ -20,6 +20,7 @@
 		"@sveltejs/kit": "^2.48.5",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/vite": "^4.1.17",
+		"@types/chroma-js": "^3.1.2",
 		"@types/d3-hierarchy": "^3.1.7",
 		"@types/node": "^24",
 		"eslint": "^9.39.1",
@@ -36,6 +37,7 @@
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
+		"chroma-js": "^3.1.2",
 		"d3-hierarchy": "^3.1.2"
 	}
 }

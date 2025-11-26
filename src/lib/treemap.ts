@@ -1,4 +1,5 @@
 import { treemap, hierarchy, type HierarchyRectangularNode } from 'd3-hierarchy';
+import type { CategoryKey } from './budgetStore';
 
 export interface BudgetItem {
 	name: string;
@@ -7,13 +8,15 @@ export interface BudgetItem {
 }
 
 interface TreeNode {
+	id: CategoryKey | '_empty' | 'root';
 	name: string;
 	value?: number;
 	color?: string;
 	children?: BudgetItem[];
 }
 
-export interface TreemapBox {
+export interface TreemapBoxType {
+	id: CategoryKey;
 	name: string;
 	value: number;
 	color?: string;
@@ -38,7 +41,7 @@ export function calculateTreemap(
 	total: number,
 	width: number,
 	height: number
-): TreemapBox[] {
+): TreemapBoxType[] {
 	// Calculate the sum of items
 	const itemsSum = items.reduce((sum, item) => sum + item.value, 0);
 
@@ -49,7 +52,7 @@ export function calculateTreemap(
 
 	// Create hierarchy structure
 	// Sort so larger items come first, which pushes the empty (smallest) to bottom-left
-	const root = hierarchy<TreeNode>({ name: 'root', children: allItems })
+	const root = hierarchy<TreeNode>({ id: 'root', name: 'root', children: allItems })
 		.sum((d) => d.value || 0)
 		.sort((a, b) => {
 			// Put _empty at the end (bottom-left in treemap)
@@ -66,11 +69,12 @@ export function calculateTreemap(
 	const layoutRoot: HierarchyRectangularNode<TreeNode> = treemapLayout(root);
 
 	// Extract boxes from leaf nodes (excluding the empty placeholder)
-	const boxes: TreemapBox[] = [];
+	const boxes: TreemapBoxType[] = [];
 	if (layoutRoot.children) {
 		for (const node of layoutRoot.children) {
 			if (node.data.name !== '_empty') {
 				boxes.push({
+					id: node.data.id as CategoryKey,
 					name: node.data.name,
 					value: node.data.value || 0,
 					color: node.data.color,

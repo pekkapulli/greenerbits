@@ -1,45 +1,22 @@
 <script lang="ts">
-	import { calculateTreemap, type BudgetItem } from '$lib/treemap';
+	import { calculateTreemap, type TreemapBoxType } from '$lib/treemap';
+	import { currentFootprint, totalFootprint } from '$lib/budgetStore';
+	import { get } from 'svelte/store';
+	import Modal from '$lib/Modal.svelte';
+	import ModalContent from '$lib/ModalContent.svelte';
+	import TreemapBox from '$lib/TreemapBox.svelte';
 
 	let budget = 1.5; // Target: 1.5 tonnes CO₂e per person per year (aligned with Paris Agreement goals)
 	let containerWidth = 400;
 
 	$: size = Math.min(containerWidth - 20, 400);
 
-	// Typical Western lifestyle carbon footprint breakdown (tonnes CO₂e per person per year)
-	// Average Western footprint is ~10-15 tonnes/year, needs to reduce to ~1.5 tonnes
-	// Source assumptions based on EU/US average lifestyle patterns:
-	const items = [
-		{
-			name: 'Transportation',
-			value: 3.2, // Assumes car ownership (12,000 km/year at ~200g CO₂/km) + occasional flights
-			color: '#34D399'
-		},
-		{
-			name: 'Housing',
-			value: 2.8, // Home heating/cooling, electricity (gas/coal-heavy grid), water heating
-			color: '#60A5FA'
-		},
-		{
-			name: 'Food',
-			value: 2.5, // Western diet with high meat consumption (~50kg meat/year), dairy, processed foods
-			color: '#FBBF24'
-		},
-		{
-			name: 'Goods & Services',
-			value: 2.0, // Clothing, furniture, electronics, entertainment, services
-			color: '#F87171'
-		},
-		{
-			name: 'Digital Consumption',
-			value: 0.5, // Streaming, cloud services, device manufacturing share, internet infrastructure
-			color: '#A78BFA'
-		}
-	];
+	// Use the derived store for items
+	$: items = get(currentFootprint);
+	$: totalConsumption = get(totalFootprint);
 
 	const border = 4;
 
-	$: totalConsumption = items.reduce((sum, item) => sum + item.value, 0);
 	$: treemapBoxes = calculateTreemap(
 		items,
 		Math.max(budget, totalConsumption),
@@ -51,6 +28,15 @@
 	// The area should be proportional: budgetSize² / size² = budget / totalConsumption
 	// Max out at size when budget >= totalConsumption
 	$: budgetOverlaySize = Math.min(size, size * Math.sqrt(budget / totalConsumption));
+
+	let modalOpen = false;
+	let selectedBox: TreemapBoxType | null = null;
+
+	function handleBoxClick(box: TreemapBoxType) {
+		console.log('Box clicked in page:', box);
+		selectedBox = box;
+		modalOpen = true;
+	}
 </script>
 
 <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
@@ -76,31 +62,27 @@
 		class="bg-white shadow-lg relative overflow-visible border-{border} border-transparent"
 	>
 		{#each treemapBoxes as box}
-			<div
-				style="
-					position: absolute;
-					left: {box.x0}px;
-					top: {box.y0}px;
-					width: {box.width}px;
-					height: {box.height}px;
-					background-color: {box.color};
-				"
-				class="flex items-center justify-center text-white text-xs font-semibold p-1"
-			>
-				<span class="text-center">{box.name}</span>
-			</div>
+			<TreemapBox {box} handleClick={handleBoxClick} />
 		{/each}
 
 		<!-- Budget overlay box showing the target budget size -->
 		<div
 			style="
-				position: absolute;
+        position: absolute;
 				left: {(size - budgetOverlaySize) / 2 - border}px;
 				top: {(size - budgetOverlaySize) / 2 - border}px;
 				width: {budgetOverlaySize}px;
 				height: {budgetOverlaySize}px;
 			"
-			class="border-4 border-gray-800 pointer-events-none"
+			class="border-4 border-green-600 pointer-events-none opacity-50"
 		></div>
+
+		<Modal
+			open={modalOpen}
+			onClose={() => (modalOpen = false)}
+			color={selectedBox?.color ?? 'white'}
+		>
+			<ModalContent box={selectedBox} />
+		</Modal>
 	</div>
 </div>
