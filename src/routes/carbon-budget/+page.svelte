@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { calculateTreemap, type TreemapBoxType } from '$lib/treemap';
 	import { currentFootprint, totalFootprint } from '$lib/budgetStore';
-	import { get } from 'svelte/store';
 	import Modal from '$lib/Modal.svelte';
 	import ModalContent from '$lib/ModalContent.svelte';
 	import TreemapBox from '$lib/TreemapBox.svelte';
@@ -11,9 +10,9 @@
 
 	$: size = Math.min(containerWidth - 20, 400);
 
-	// Use the derived store for items
-	$: items = get(currentFootprint);
-	$: totalConsumption = get(totalFootprint);
+	// Use the derived store for items - subscribe with $ syntax
+	$: items = $currentFootprint;
+	$: totalConsumption = $totalFootprint;
 
 	const border = 4;
 
