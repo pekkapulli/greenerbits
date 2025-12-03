@@ -39,8 +39,6 @@
 		// So: position = thumbWidth/2 + ratio * (containerWidth - thumbWidth)
 		const thumbHalf = thumbWidth / 2;
 		const pixelPos = thumbHalf + ratio * (containerWidth - thumbWidth);
-
-		console.log('percentWithThumbOffset:', { val, clamped, ratio, pixelPos, containerWidth });
 		return pixelPos;
 	}
 </script>

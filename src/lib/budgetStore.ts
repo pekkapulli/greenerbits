@@ -254,53 +254,41 @@ export interface Subcategoriestate {
 }
 
 export interface BudgetState {
-	transportation: Subcategoriestate;
-	housing: Subcategoriestate;
-	food: Subcategoriestate;
-	goods: Subcategoriestate;
-	digital: Subcategoriestate;
+	transportation?: Subcategoriestate;
+	housing?: Subcategoriestate;
+	food?: Subcategoriestate;
+	goods?: Subcategoriestate;
+	digital?: Subcategoriestate;
 }
 
 // Default state (average Western lifestyle)
-const defaultState: BudgetState = {
-	transportation: {
-		daily: 1, // Regular car use
-		flights: 1 // 1-2 long-haul flights per year
-	},
-	housing: {
-		energy: 1 // Average house
-	},
-	food: {
-		diet: 1 // Average Western diet
-	},
-	goods: {
-		consumption: 1 // Average consumption
-	},
-	digital: {
-		usage: 1 // Average digital lifestyle
-	}
-};
+const defaultState: BudgetState = {};
 
 export const budgetState = writable<BudgetState>(defaultState);
 
 // Derived store: calculate current carbon footprint for each category
+// Only include categories that exist in the state
 export const currentFootprint = derived(budgetState, ($state) => {
-	return Object.entries(categories).map(([key, category]) => {
-		const categoryState = $state[key as CategoryKey];
-		// Sum up all subcategories for this category
-		const totalValue = category.subcategories.reduce((sum, subcategory) => {
-			const selectedIndex = categoryState[subcategory.id] || 0;
-			const option = subcategory.options[selectedIndex];
-			return sum + option.value;
-		}, 0);
+	return Object.entries($state)
+		.map(([key, categoryState]) => {
+			const category = categories[key as CategoryKey];
+			if (!category) return null;
 
-		return {
-			id: category.id,
-			name: category.name,
-			color: category.color,
-			value: totalValue
-		};
-	});
+			// Sum up all subcategories for this category
+			const totalValue = category.subcategories.reduce((sum, subcategory) => {
+				const selectedIndex = categoryState?.[subcategory.id] ?? undefined;
+				const option = selectedIndex !== undefined ? subcategory.options[selectedIndex] : undefined;
+				return sum + (option ? option.value : 0);
+			}, 0);
+
+			return {
+				id: category.id,
+				name: category.name,
+				color: category.color,
+				value: totalValue
+			};
+		})
+		.filter((item) => item !== null);
 });
 
 // Derived store: total carbon footprint

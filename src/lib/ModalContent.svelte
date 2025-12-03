@@ -5,9 +5,10 @@
 
 	interface Props {
 		box?: TreemapBoxType | null;
+		onClose?: () => void;
 	}
 
-	const { box }: Props = $props();
+	const { box, onClose }: Props = $props();
 
 	const categoryData = box ? categories[box.id] : null;
 	const categoryState = $derived(box ? $budgetState[box.id] : null);
@@ -42,7 +43,7 @@
 					> t CO₂e/year
 				</p>
 
-				<div class="space-y-4">
+				<div class="space-y-4 mb-6">
 					{#each categoryData.subcategories as subcategory}
 						{@const selectedIndex = categoryState[subcategory.id] || 0}
 						{@const selectedOption = subcategory.options[selectedIndex]}
@@ -64,6 +65,13 @@
 						</button>
 					{/each}
 				</div>
+
+				<button
+					onclick={onClose}
+					class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+				>
+					Done
+				</button>
 			</div>
 		{:else if selectedSubcategory && box}
 			<div class="p-4">
