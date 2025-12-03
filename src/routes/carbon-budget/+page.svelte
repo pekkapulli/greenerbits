@@ -4,6 +4,7 @@
 	import Modal from '$lib/Modal.svelte';
 	import ModalContent from '$lib/ModalContent.svelte';
 	import TreemapBox from '$lib/TreemapBox.svelte';
+	import BudgetSlider from '$lib/BudgetSlider.svelte';
 
 	let budget = 1.5; // Target: 1.5 tonnes CO₂e per person per year (aligned with Paris Agreement goals)
 	let containerWidth = 400;
@@ -46,13 +47,16 @@
 			Total Budget: <span class="font-bold text-gray-900">{budget.toFixed(1)} tonnes CO₂e/year</span
 			>
 		</div>
-		<input
-			type="range"
-			min="0.5"
-			max="15"
-			step="0.1"
-			bind:value={budget}
-			class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-green-600"
+		<BudgetSlider
+			value={budget}
+			min={0.5}
+			max={15}
+			step={0.1}
+			marks={[
+				{ value: 1.5, label: 'Planetary budget' },
+				{ value: 10, label: 'Avg. Western' }
+			]}
+			onChange={(v) => (budget = v)}
 		/>
 	</div>
 
