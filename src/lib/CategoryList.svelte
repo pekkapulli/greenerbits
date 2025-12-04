@@ -2,6 +2,7 @@
 	import { categories, budgetState, type CategoryKey } from '$lib/budgetStore';
 	import Modal from '$lib/Modal.svelte';
 	import ModalContent from '$lib/ModalContent.svelte';
+	import CategoryItem from '$lib/CategoryItem.svelte';
 	import type { TreemapBoxType } from '$lib/treemap';
 
 	interface Props {
@@ -16,44 +17,60 @@
 	let modalOpen = $state(false);
 	let selectedBox = $state<TreemapBoxType | null>(null);
 
-	function handleDragStart(index: number) {
+	function handleDragStart(e: DragEvent, index: number, element: HTMLElement) {
 		draggedIndex = index;
+		const categoryKey = categoryKeys[index];
+
+		// Set drag data for cross-component drops
+		e.dataTransfer?.setData('categoryKey', categoryKey);
+		e.dataTransfer?.setData('source', 'categoryList');
+
+		// Use the actual element as drag image
+		if (e.dataTransfer) {
+			const rect = element.getBoundingClientRect();
+			const offsetX = e.clientX - rect.left;
+			const offsetY = e.clientY - rect.top;
+			e.dataTransfer.setDragImage(element, offsetX, offsetY);
+		}
 	}
 
-	function handleDragOver(e: DragEvent, index: number) {
+	function handleDragOver(e: DragEvent, targetIndex: number) {
 		e.preventDefault();
-		if (draggedIndex !== null && draggedIndex !== index && dragOverIndex !== index) {
-			dragOverIndex = index;
+		e.dataTransfer!.dropEffect = 'move';
+
+		// Reorder the list in real-time as we drag
+		if (draggedIndex !== null && draggedIndex !== targetIndex) {
+			const newOrder = [...categoryKeys];
+			const [removed] = newOrder.splice(draggedIndex, 1);
+			newOrder.splice(targetIndex, 0, removed);
+
+			categoryKeys = newOrder;
+			draggedIndex = targetIndex;
 		}
+
+		dragOverIndex = targetIndex;
 	}
 
 	function handleDragEnd() {
-		if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
-			const newOrder = [...categoryKeys];
-			const [removed] = newOrder.splice(draggedIndex, 1);
-			newOrder.splice(dragOverIndex, 0, removed);
-			categoryKeys = newOrder;
-			onReorder?.(newOrder);
+		// Finalize the order
+		if (draggedIndex !== null) {
+			onReorder?.(categoryKeys);
 		}
-		draggedIndex = null;
-		dragOverIndex = null;
+		// Delay clearing drag state to prevent visual snap-back
+		requestAnimationFrame(() => {
+			draggedIndex = null;
+			dragOverIndex = null;
+		});
 	}
 
-	function handleDrop(e: DragEvent) {
+	function handleDrop(e: DragEvent, index: number) {
 		e.preventDefault();
+		e.stopPropagation();
 		handleDragEnd();
 	}
 
-	function shouldShowPlaceholder(index: number): boolean {
-		return dragOverIndex === index && draggedIndex !== null && draggedIndex !== index;
-	}
-
-	function isDragging(index: number): boolean {
+	function isDraggingHelper(index: number): boolean {
 		return draggedIndex === index;
-	}
-
-	function isAdded(categoryKey: CategoryKey): boolean {
-		return $budgetState[categoryKey] !== undefined;
 	}
 
 	function handleAdd(categoryKey: CategoryKey) {
@@ -97,93 +114,18 @@
 
 <div class="w-full max-w-md">
 	{#each categoryKeys as categoryKey, index (categoryKey)}
-		{@const category = categories[categoryKey]}
-
-		<div class="relative">
-			<!-- Placeholder space when dragging over -->
-			{#if shouldShowPlaceholder(index)}
-				<div
-					class="h-[72px] mb-2 rounded-lg border-2 border-dashed border-green-500 bg-green-50 transition-all duration-200"
-					ondragover={(e) => handleDragOver(e, index)}
-					ondrop={handleDrop}
-					role="region"
-					aria-label="Drop target"
-				></div>
-			{/if}
-
-			<div
-				draggable="true"
-				ondragstart={() => handleDragStart(index)}
-				ondragover={(e) => handleDragOver(e, index)}
-				ondragend={handleDragEnd}
-				ondrop={handleDrop}
-				class="w-full p-4 rounded-lg shadow-sm border-2 transition-all duration-200 hover:shadow-md mb-2 {isDragging(
-					index
-				)
-					? 'opacity-30 scale-95'
-					: 'opacity-100 scale-100'} {isAdded(categoryKey)
-					? 'opacity-50 bg-gray-100'
-					: ''} border-gray-200"
-				style="background-color: {isAdded(categoryKey) ? '#f3f4f6' : category.color + '15'}"
-				role="button"
-				tabindex="0"
-			>
-				<div class="flex items-center justify-between gap-3">
-					<div class="flex items-center gap-3">
-						<!-- Drag handle -->
-						<div class="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
-							<svg
-								width="20"
-								height="20"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							>
-								<circle cx="9" cy="5" r="1" />
-								<circle cx="9" cy="12" r="1" />
-								<circle cx="9" cy="19" r="1" />
-								<circle cx="15" cy="5" r="1" />
-								<circle cx="15" cy="12" r="1" />
-								<circle cx="15" cy="19" r="1" />
-							</svg>
-						</div>
-						<div
-							class="w-6 h-6 rounded text-white flex items-center justify-center font-mono font-bold"
-							style="background-color: {category.color}"
-						>
-							{index + 1}
-						</div>
-						<span class="font-semibold text-gray-800">{category.name}</span>
-					</div>
-
-					<!-- Add/Undo button -->
-					{#if isAdded(categoryKey)}
-						<button
-							onclick={(e) => {
-								e.stopPropagation();
-								handleUndo(categoryKey);
-							}}
-							class="px-3 py-1 text-sm rounded bg-gray-300 hover:bg-gray-400 text-gray-700 transition-colors font-bold"
-						>
-							- Remove
-						</button>
-					{:else}
-						<button
-							onclick={(e) => {
-								e.stopPropagation();
-								handleAdd(categoryKey);
-							}}
-							class="px-3 py-1 text-sm rounded bg-green-500 hover:bg-green-600 text-white transition-colors font-bold"
-						>
-							+ Add
-						</button>
-					{/if}
-				</div>
-			</div>
-		</div>
+		<CategoryItem
+			{categoryKey}
+			{index}
+			maxIndex={categoryKeys.length - 1}
+			isDragging={isDraggingHelper(index)}
+			onDragStart={handleDragStart}
+			onDragOver={handleDragOver}
+			onDragEnd={handleDragEnd}
+			onDrop={handleDrop}
+			onAdd={handleAdd}
+			onUndo={handleUndo}
+		/>
 	{/each}
 </div>
 
