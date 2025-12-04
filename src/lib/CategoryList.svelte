@@ -150,7 +150,12 @@
 								<circle cx="15" cy="19" r="1" />
 							</svg>
 						</div>
-						<div class="w-4 h-4 rounded" style="background-color: {category.color}"></div>
+						<div
+							class="w-6 h-6 rounded text-white flex items-center justify-center font-mono font-bold"
+							style="background-color: {category.color}"
+						>
+							{index + 1}
+						</div>
 						<span class="font-semibold text-gray-800">{category.name}</span>
 					</div>
 
@@ -161,7 +166,7 @@
 								e.stopPropagation();
 								handleUndo(categoryKey);
 							}}
-							class="px-3 py-1 text-sm rounded bg-gray-300 hover:bg-gray-400 text-gray-700 transition-colors"
+							class="px-3 py-1 text-sm rounded bg-gray-300 hover:bg-gray-400 text-gray-700 transition-colors font-bold"
 						>
 							- Remove
 						</button>
@@ -171,7 +176,7 @@
 								e.stopPropagation();
 								handleAdd(categoryKey);
 							}}
-							class="px-3 py-1 text-sm rounded bg-green-500 hover:bg-green-600 text-white transition-colors"
+							class="px-3 py-1 text-sm rounded bg-green-500 hover:bg-green-600 text-white transition-colors font-bold"
 						>
 							+ Add
 						</button>
