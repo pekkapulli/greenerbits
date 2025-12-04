@@ -13,21 +13,19 @@
 
 	const { items, budget, totalConsumption, size }: Props = $props();
 
-	const border = 4;
+	const border = 16;
+	const innerSize = size - 2 * border;
 
-	let treemapBoxes = $derived(
-		calculateTreemap(
-			items,
-			Math.max(budget, totalConsumption),
-			size - 2 * border,
-			size - 2 * border
-		)
+	let { treemapBoxes, boxesSize } = $derived(
+		calculateTreemap(items, Math.max(budget, totalConsumption), innerSize)
 	);
 
 	// Calculate the size of the budget overlay box
 	// The area should be proportional: budgetSize² / size² = budget / totalConsumption
 	// Max out at size when budget >= totalConsumption
-	let budgetOverlaySize = $derived(Math.min(size, size * Math.sqrt(budget / totalConsumption)));
+	let budgetOverlaySize = $derived(
+		Math.min(innerSize, innerSize * Math.sqrt(budget / totalConsumption))
+	);
 
 	let modalOpen = $state(false);
 	let selectedBox = $state<TreemapBoxType | null>(null);
@@ -41,18 +39,20 @@
 
 <div
 	style="width: {size}px; height: {size}px;"
-	class="bg-white shadow-lg relative overflow-visible border-{border} border-transparent"
+	class="bg-white shadow-lg overflow-visible border-{border} border-transparent relative flex items-center justify-center"
 >
-	{#each treemapBoxes as box}
-		<TreemapBox {box} handleClick={handleBoxClick} />
-	{/each}
+	<div style="width: {boxesSize}px; height: {boxesSize}px;" class="relative">
+		{#each treemapBoxes as box}
+			<TreemapBox {box} handleClick={handleBoxClick} />
+		{/each}
+	</div>
 
 	<!-- Budget overlay box showing the target budget size -->
 	<div
 		style="
 			position: absolute;
-			left: {(size - budgetOverlaySize) / 2 - border}px;
-			top: {(size - budgetOverlaySize) / 2 - border}px;
+			left: {(innerSize - budgetOverlaySize) / 2 + border}px;
+			top: {(innerSize - budgetOverlaySize) / 2 + border}px;
 			width: {budgetOverlaySize}px;
 			height: {budgetOverlaySize}px;
 		"

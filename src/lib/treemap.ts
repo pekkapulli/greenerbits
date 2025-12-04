@@ -32,38 +32,37 @@ export interface TreemapBoxType {
  * Calculate treemap layout for budget items
  * @param items - Array of budget items with name and budget
  * @param total - Total budget (items can be less than this, leaving empty space)
- * @param width - Width of the container
- * @param height - Height of the container
+ * @param containerSize - Width and height of the container
  * @returns Array of treemap boxes with positions and dimensions
  */
 export function calculateTreemap(
 	items: BudgetItem[],
 	total: number,
-	width: number,
-	height: number
-): TreemapBoxType[] {
+	containerSize: number
+): { treemapBoxes: TreemapBoxType[]; boxesSize: number } {
 	// Calculate the sum of items
 	const itemsSum = items.reduce((sum, item) => sum + item.value, 0);
 
+	// Determine size (square) of the treemap
+	const itemsShare = Math.min(total, itemsSum) / total;
+	const area = itemsShare * (containerSize * containerSize);
+	const size = Math.sqrt(area);
+
 	// Add an "empty" item at the end if items don't fill the total budget
 	// Placing it at the end with sorting will push it to bottom-left
-	const allItems: BudgetItem[] =
-		itemsSum < total ? [...items, { name: '_empty', value: total - itemsSum }] : items;
+	const allItems: BudgetItem[] = items;
 
 	// Create hierarchy structure
 	// Sort so larger items come first, which pushes the empty (smallest) to bottom-left
 	const root = hierarchy<TreeNode>({ id: 'root', name: 'root', children: allItems })
 		.sum((d) => d.value || 0)
 		.sort((a, b) => {
-			// Put _empty at the end (bottom-left in treemap)
-			if (a.data.name === '_empty') return 1;
-			if (b.data.name === '_empty') return -1;
 			// Otherwise sort by value descending
 			return (b.value || 0) - (a.value || 0);
 		});
 
 	// Create treemap layout
-	const treemapLayout = treemap<TreeNode>().size([width, height]).padding(2).round(true);
+	const treemapLayout = treemap<TreeNode>().size([size, size]).padding(2).round(true);
 
 	// Calculate layout
 	const layoutRoot: HierarchyRectangularNode<TreeNode> = treemapLayout(root);
@@ -89,5 +88,5 @@ export function calculateTreemap(
 		}
 	}
 
-	return boxes;
+	return { treemapBoxes: boxes, boxesSize: size };
 }
