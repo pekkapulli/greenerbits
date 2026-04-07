@@ -13,14 +13,6 @@
 	const categoryData = box ? categories[box.id] : null;
 	const categoryState = $derived(box ? $budgetState[box.id] : null);
 
-	const totalFootprint = $derived.by(() => {
-		if (!box || !categoryData || !categoryState) return 0;
-		return categoryData.subcategories.reduce((sum, subcategory) => {
-			const selectedIndex = categoryState[subcategory.id] || 0;
-			return sum + subcategory.options[selectedIndex].value;
-		}, 0);
-	});
-
 	let selectedSubcategory = $state<Subcategory | null>(null);
 
 	function openSelector(subcategory: Subcategory) {
@@ -37,11 +29,6 @@
 		{#if !selectedSubcategory}
 			<div class="p-4">
 				<h2 class="text-2xl font-bold mb-4">{box.name}</h2>
-				<p class="mb-4">
-					Total carbon footprint: <span class="font-mono font-bold text-lg"
-						>{totalFootprint.toFixed(2)}</span
-					> t CO₂e/year
-				</p>
 
 				<div class="space-y-4 mb-6">
 					{#each categoryData.subcategories as subcategory}
@@ -53,9 +40,6 @@
 							onclick={() => openSelector(subcategory)}
 						>
 							<h3 class="font-semibold text-gray-700 mb-1">{subcategory.name}</h3>
-							<p class="text-sm mb-2">
-								<span class="font-mono text-green-600">{selectedOption.value.toFixed(2)}</span> t CO₂e/year
-							</p>
 							<p class="text-sm text-gray-600">
 								<strong>{selectedOption.label}</strong>
 							</p>

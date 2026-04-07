@@ -42,7 +42,7 @@
 	class="bg-white shadow-lg overflow-visible border-{border} border-transparent relative flex items-center justify-center"
 >
 	<div style="width: {boxesSize}px; height: {boxesSize}px;" class="relative">
-		{#each treemapBoxes as box}
+		{#each treemapBoxes as box (box.id)}
 			<TreemapBox {box} handleClick={handleBoxClick} />
 		{/each}
 	</div>
