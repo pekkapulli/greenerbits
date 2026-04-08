@@ -68,11 +68,6 @@ export const digitalPractices: DigitalPractice[] = [
 		carbonIntensity: 1
 	},
 	{
-		id: 'social-updates',
-		label: 'Scrolling updates on social media',
-		carbonIntensity: 2
-	},
-	{
 		id: 'mobile-games',
 		label: 'Playing mobile games',
 		carbonIntensity: 2
@@ -81,11 +76,6 @@ export const digitalPractices: DigitalPractice[] = [
 		id: 'long-videos',
 		label: 'Viewing long videos online',
 		carbonIntensity: 3
-	},
-	{
-		id: 'visual-posts',
-		label: 'Scrolling visual posts on social media',
-		carbonIntensity: 2
 	},
 	{
 		id: 'short-videos',
@@ -110,12 +100,7 @@ export const digitalPractices: DigitalPractice[] = [
 	{
 		id: 'multiple-it-systems',
 		label: 'Using several IT systems for work',
-		carbonIntensity: 2
-	},
-	{
-		id: 'doomscrolling',
-		label: 'Doomscrolling',
-		carbonIntensity: 2
+		carbonIntensity: 1
 	},
 	{
 		id: 'managing-files',
