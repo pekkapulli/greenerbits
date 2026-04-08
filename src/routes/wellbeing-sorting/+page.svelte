@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { digitalPractices, type CarbonIntensity, type DigitalPractice } from '$lib/digitalPractices';
+	import { digitalPractices, type DigitalPractice } from '$lib/digitalPractices';
 	import WellbeingPracticeCard from '$lib/WellbeingPracticeCard.svelte';
+	import {
+		getWellbeingSortingMessages,
+		wellbeingSortingLocale,
+		wellbeingSortingLocaleOptions
+	} from '$lib/wellbeingSortingI18n';
 
 	interface PlacedPractice extends DigitalPractice {
 		x: number;
@@ -9,20 +14,8 @@
 	}
 
 	const totalCount = digitalPractices.length;
+	const languageSelectorId = 'wellbeing-sorting-language';
 
-	const axisLabels = [
-		{ id: 'negative', label: 'Negative effect on wellbeing', align: 'text-left' },
-		{ id: 'neutral', label: 'Neutral', align: 'text-center' },
-		{ id: 'positive', label: 'Positive effect on wellbeing', align: 'text-right' }
-	] as const;
-
-	const intensityTone: Record<CarbonIntensity, { dot: string; ring: string }> = {
-		1: { dot: 'bg-sky-500', ring: 'ring-1 ring-sky-500/20' },
-		2: { dot: 'bg-amber-500', ring: 'ring-1 ring-amber-500/20' },
-		3: { dot: 'bg-rose-500', ring: 'ring-1 ring-rose-500/20' }
-	};
-
-	const cardOutlineDot = 'bg-white';
 	const slotHeightPx = 176;
 	const horizontalPlacementInsetPx = 72;
 	const horizontalDropBufferPx = 36;
@@ -43,6 +36,12 @@
 	let pointerOffsetY = 0;
 
 	$: currentPractice = digitalPractices[nextIndex] ?? null;
+	$: text = getWellbeingSortingMessages($wellbeingSortingLocale);
+	$: axisLabels = [
+		{ id: 'negative', label: text.axisNegative, align: 'text-left' },
+		{ id: 'neutral', label: text.axisNeutral, align: 'text-center' },
+		{ id: 'positive', label: text.axisPositive, align: 'text-right' }
+	] as const;
 	$: placedCount = placedPractices.length;
 	$: sortedPractices = [...placedPractices].sort((left, right) => left.x - right.x || left.order - right.order);
 	$: visiblePractices = showSortedByScore ? sortedPractices : placedPractices;
@@ -245,20 +244,39 @@
 	<div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] opacity-35"></div>
 
 	<section class="relative min-h-screen overflow-x-hidden pb-28 sm:pb-32">
-		
+		<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-end px-4 pt-4 sm:px-6 sm:pt-6">
+			<div class="pointer-events-auto flex items-center gap-3 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-medium text-stone-700 shadow-[0_12px_30px_rgba(45,38,58,0.08)] backdrop-blur">
+				<label for={languageSelectorId} class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600">
+					{text.languageLabel}
+				</label>
+				<select
+					id={languageSelectorId}
+					bind:value={$wellbeingSortingLocale}
+					class="rounded-full border border-stone-200/80 bg-white px-3 py-1.5 text-sm text-stone-800 outline-none transition focus:border-stone-400"
+				>
+					{#each wellbeingSortingLocaleOptions as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
+			</div>
+		</div>
 
 		<div class="relative z-10 px-4 pt-24 text-center sm:px-8 sm:pt-28">
 			<h1 class="text-3xl leading-tight text-stone-900 sm:text-5xl" style="font-family: Georgia, 'Times New Roman', serif;">
-				Digital practices and wellbeing
+				{text.pageTitle}
 			</h1>
 			<p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-stone-700 sm:text-base">
-				Rate how you think different digital practices affect your wellbeing.
+				{text.pageDescription}
 			</p>
 		</div>
 
 		<div class="pointer-events-none inset-x-0 mb-4 flex items-start justify-end px-4 py-4 sm:px-6">
 			<div class="pointer-events-auto flex max-w-[min(100%,32rem)] flex-wrap items-center justify-end gap-2">
-				<div class="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur">
+				<div
+					role="status"
+					aria-label={text.progressLabel(placedCount, totalCount)}
+					class="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur"
+				>
 					{placedCount}/{totalCount}
 				</div>
 				<button
@@ -267,7 +285,7 @@
 					disabled={placedPractices.length === 0}
 					class="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					Undo
+					{text.undo}
 				</button>
 				<button
 					type="button"
@@ -275,7 +293,7 @@
 					disabled={placedPractices.length === 0 && !currentPractice}
 					class="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					Reset
+					{text.reset}
 				</button>
 			</div>
 		</div>
@@ -326,9 +344,9 @@
 									>
 										<WellbeingPracticeCard
 											practice={practice}
+											locale={$wellbeingSortingLocale}
 											showCarbonIntensity={showCarbonIntensities}
-											ringClass={intensityTone[practice.carbonIntensity].ring}
-											{cardOutlineDot}
+											intensity={practice.carbonIntensity}
 											delayedRevealMs={Math.min(practice.order * 45, 360)}
 										/>
 									</article>
@@ -352,8 +370,8 @@
 				>
 					<WellbeingPracticeCard
 						practice={currentPractice}
-						ringClass={intensityTone[currentPractice.carbonIntensity].ring}
-						{cardOutlineDot}
+						locale={$wellbeingSortingLocale}
+						intensity={currentPractice.carbonIntensity}
 					/>
 				</button>
 			{:else if canRevealCarbonIntensities}
@@ -364,7 +382,7 @@
 						aria-pressed={showSortedByScore}
 						class={`rounded-full border px-4 py-2 text-sm font-medium backdrop-blur transition ${showSortedByScore ? 'border-stone-700/20 bg-stone-900 text-white hover:bg-stone-800' : 'border-white/70 bg-white/70 text-stone-700 hover:bg-white'}`}
 					>
-						{showSortedByScore ? 'Show placement order' : 'Sort by score'}
+						{showSortedByScore ? text.showPlacementOrder : text.sortByScore}
 					</button>
 					<button
 						type="button"
@@ -372,9 +390,7 @@
 						aria-pressed={showCarbonIntensities}
 						class="pointer-events-auto rounded-full cursor-pointer border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white"
 					>
-						{showCarbonIntensities
-							? 'Hide carbon intensities'
-							: '🔥 Show carbon intensities'}
+						{showCarbonIntensities ? text.hideCarbonIntensities : text.showCarbonIntensities}
 					</button>
 				</div>
 			{/if}
@@ -388,8 +404,8 @@
 		>
 			<WellbeingPracticeCard
 				practice={currentPractice}
-				ringClass={intensityTone[currentPractice.carbonIntensity].ring}
-				{cardOutlineDot}
+				locale={$wellbeingSortingLocale}
+				intensity={currentPractice.carbonIntensity}
 			/>
 		</div>
 	{/if}
@@ -403,9 +419,9 @@
 			>
 				<WellbeingPracticeCard
 					practice={draggedPractice}
+					locale={$wellbeingSortingLocale}
 					showCarbonIntensity={showCarbonIntensities}
-					ringClass={intensityTone[draggedPractice.carbonIntensity].ring}
-					{cardOutlineDot}
+					intensity={draggedPractice.carbonIntensity}
 					delayedRevealMs={Math.min(draggedPractice.order * 45, 360)}
 				/>
 			</div>
