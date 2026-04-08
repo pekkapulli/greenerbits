@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 	import { digitalPractices, type DigitalPractice } from '$lib/digitalPractices';
 	import Button from '$lib/wellbeing-cards/Button.svelte';
+	import CopyClipboardButton from '$lib/wellbeing-cards/CopyClipboardButton.svelte';
 	import WellbeingPracticeCard from '$lib/wellbeing-cards/WellbeingPracticeCard.svelte';
 	import {
 		getWellbeingSortingMessages,
@@ -21,7 +22,9 @@
 	const slotHeightPx = 176;
 	const horizontalPlacementInsetPx = 72;
 	const horizontalDropBufferPx = 36;
-	const neutralPlacementX = 0.5;
+	const minPlacementX = -1;
+	const maxPlacementX = 1;
+	const neutralPlacementX = 0;
 
 	let placedPractices: PlacedPractice[] = [];
 	let nextIndex = 0;
@@ -46,8 +49,21 @@
 		{ id: 'positive', label: text.axisPositive, align: 'text-right' }
 	] as const;
 	$: placedCount = placedPractices.length;
-	$: sortedPractices = [...placedPractices].sort((left, right) => left.x - right.x || left.order - right.order);
+	$: sortedPractices = [...placedPractices].sort(
+		(left, right) => left.x - right.x || left.order - right.order
+	);
 	$: visiblePractices = showSortedByScore ? sortedPractices : placedPractices;
+	$: clipboardExport = JSON.stringify(
+		{
+			placements: placedPractices.map(({ id, x, skipped }) => ({
+				id,
+				x: clamp(x, minPlacementX, maxPlacementX),
+				skipped: skipped ? 1 : 0
+			}))
+		},
+		null,
+		2
+	);
 	$: totalSlots = currentPractice ? placedCount + 1 : placedCount;
 	$: slotIndexes = Array.from({ length: totalSlots }, (_, index) => index);
 	$: highlightedSlotIndex = !isDragging
@@ -66,6 +82,16 @@
 
 	function clamp(value: number, min: number, max: number) {
 		return Math.min(Math.max(value, min), max);
+	}
+
+	function percentToNormalizedPlacement(percent: number) {
+		return clamp(percent, 0, 1) * (maxPlacementX - minPlacementX) + minPlacementX;
+	}
+
+	function normalizedPlacementToPercent(x: number) {
+		return (
+			(clamp(x, minPlacementX, maxPlacementX) - minPlacementX) / (maxPlacementX - minPlacementX)
+		);
 	}
 
 	function toggleCarbonIntensities() {
@@ -165,7 +191,7 @@
 	}
 
 	async function placeCurrentPractice(centerX: number, width: number) {
-		await placePractice(getPlacementX(centerX, width), false);
+		await placePractice(getNormalizedPlacementX(centerX, width), false);
 	}
 
 	async function skipCurrentPractice() {
@@ -188,16 +214,17 @@
 	}
 
 	function repositionPractice(practiceId: string, centerX: number, width: number) {
-		const x = getPlacementX(centerX, width);
+		const x = getNormalizedPlacementX(centerX, width);
 
 		placedPractices = placedPractices.map((practice) =>
 			practice.id === practiceId ? { ...practice, x, skipped: false } : practice
 		);
 	}
 
-	function getPlacementX(centerX: number, width: number) {
+	function getNormalizedPlacementX(centerX: number, width: number) {
 		const inset = Math.min(horizontalPlacementInsetPx, width / 2);
-		return clamp(centerX, inset, width - inset) / width;
+		const placementPercent = clamp(centerX, inset, width - inset) / width;
+		return percentToNormalizedPlacement(placementPercent);
 	}
 
 	function scrollToSlot(slotIndex: number, behavior: ScrollBehavior = 'smooth') {
@@ -249,29 +276,45 @@
 <svelte:window onpointermove={handlePointerMove} onpointerup={handlePointerUp} />
 
 <div class="relative min-h-screen overflow-x-hidden bg-[#f4f1ea] text-stone-900">
-	<div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.8),_transparent_40%),linear-gradient(90deg,rgba(99,60,176,0.22)_0%,rgba(153,118,219,0.12)_24%,rgba(255,255,255,0.62)_50%,rgba(148,211,163,0.16)_76%,rgba(44,145,95,0.24)_100%)]"></div>
-	<div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] opacity-35"></div>
+	<div
+		class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.8),_transparent_40%),linear-gradient(90deg,rgba(99,60,176,0.22)_0%,rgba(153,118,219,0.12)_24%,rgba(255,255,255,0.62)_50%,rgba(148,211,163,0.16)_76%,rgba(44,145,95,0.24)_100%)]"
+	></div>
+	<div
+		class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] opacity-35"
+	></div>
 
 	<section class="relative min-h-screen overflow-x-hidden pb-28 sm:pb-32">
-		<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-end px-4 pt-4 sm:px-6 sm:pt-6">
-			<div class="pointer-events-auto flex items-center gap-3 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-medium text-stone-700 shadow-[0_12px_30px_rgba(45,38,58,0.08)] backdrop-blur">
-				<label for={languageSelectorId} class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600">
-					{text.languageLabel}
-				</label>
-				<select
-					id={languageSelectorId}
-					bind:value={$wellbeingSortingLocale}
-					class="rounded-full border border-stone-200/80 bg-white px-3 py-1.5 text-sm text-stone-800 outline-none transition focus:border-stone-400"
-				>
-					{#each wellbeingSortingLocaleOptions as option (option.value)}
-						<option value={option.value}>{option.label}</option>
-					{/each}
-				</select>
+		<div
+			class="inset-x-0 top-0 z-20 flex justify-end gap-4 px-4 pt-4 flex-col-reverse sm:flex-row sm:px-6 sm:pt-6"
+		>
+			<div
+				class="pointer-events-auto flex flex-wrap items-center justify-end gap-3 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-medium text-stone-700 shadow-[0_12px_30px_rgba(45,38,58,0.08)] backdrop-blur"
+			>
+				<div class="flex items-center gap-3">
+					<label
+						for={languageSelectorId}
+						class="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600"
+					>
+						{text.languageLabel}
+					</label>
+					<select
+						id={languageSelectorId}
+						bind:value={$wellbeingSortingLocale}
+						class="rounded-full border border-stone-200/80 bg-white px-3 py-1.5 text-sm text-stone-800 outline-none transition focus:border-stone-400"
+					>
+						{#each wellbeingSortingLocaleOptions as option (option.value)}
+							<option value={option.value}>{option.label}</option>
+						{/each}
+					</select>
+				</div>
 			</div>
 		</div>
 
 		<div class="relative z-10 px-4 pt-24 text-center sm:px-8 sm:pt-28">
-			<h1 class="text-3xl leading-tight text-stone-900 sm:text-5xl" style="font-family: Georgia, 'Times New Roman', serif;">
+			<h1
+				class="text-3xl leading-tight text-stone-900 sm:text-5xl"
+				style="font-family: Georgia, 'Times New Roman', serif;"
+			>
 				{text.pageTitle}
 			</h1>
 			<p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-stone-700 sm:text-base">
@@ -280,7 +323,9 @@
 		</div>
 
 		<div class="pointer-events-none inset-x-0 mb-4 flex items-start justify-end px-4 py-4 sm:px-6">
-			<div class="pointer-events-auto flex max-w-[min(100%,32rem)] flex-wrap items-center justify-end gap-2">
+			<div
+				class="pointer-events-auto flex max-w-[min(100%,32rem)] flex-wrap items-center justify-end gap-2"
+			>
 				<div
 					role="status"
 					aria-label={text.progressLabel(placedCount, totalCount)}
@@ -300,12 +345,16 @@
 			<div
 				class="relative flex h-full flex-col overflow-visible rounded-[2.5rem] border border-white/50 bg-white/18 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
 			>
-				<div class="pointer-events-none absolute top-12 bottom-0 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,rgba(25,25,25,0.2)_0%,rgba(55,55,55,0.2)_100%)]"></div>
+				<div
+					class="pointer-events-none absolute top-12 bottom-0 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,rgba(25,25,25,0.2)_0%,rgba(55,55,55,0.2)_100%)]"
+				></div>
 				<div class="pointer-events-none absolute inset-y-0 left-[12.5%] w-px bg-white/25"></div>
 				<div class="pointer-events-none absolute inset-y-0 right-[12.5%] w-px bg-white/25"></div>
 
 				<div class="pointer-events-none relative z-10 px-4 pb-2 pt-5 sm:px-6 sm:pt-6">
-					<div class="grid grid-cols-3 gap-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-600 sm:text-xs">
+					<div
+						class="grid grid-cols-3 gap-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-600 sm:text-xs"
+					>
 						{#each axisLabels as axisLabel (axisLabel.id)}
 							<p class={axisLabel.align}>{axisLabel.label}</p>
 						{/each}
@@ -321,8 +370,12 @@
 								class="relative flex items-center"
 								style={`min-height:${slotHeightPx}px;`}
 							>
-								<div class="pointer-events-none absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-3">
-									<span class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/72 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600 backdrop-blur">
+								<div
+									class="pointer-events-none absolute left-0 top-1/2 flex -translate-y-1/2 items-center gap-3"
+								>
+									<span
+										class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/70 bg-white/72 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-600 backdrop-blur"
+									>
 										{slotIndex + 1}
 									</span>
 								</div>
@@ -337,12 +390,14 @@
 								{#if practice}
 									<article
 										onpointerdown={(event) => beginPlacedDrag(event, practice.id)}
-										class:opacity-0={isDragging && dragMode === 'placed' && draggedPracticeId === practice.id}
+										class:opacity-0={isDragging &&
+											dragMode === 'placed' &&
+											draggedPracticeId === practice.id}
 										class="absolute top-1/2 z-20 w-[min(18rem,calc(100vw-2.5rem))] -translate-x-1/2 -translate-y-1/2"
-										style={`left:${practice.x * 100}%; cursor: grab; touch-action: none;`}
+										style={`left:${normalizedPlacementToPercent(practice.x) * 100}%; cursor: grab; touch-action: none;`}
 									>
 										<WellbeingPracticeCard
-											practice={practice}
+											{practice}
 											locale={$wellbeingSortingLocale}
 											showCarbonIntensity={showCarbonIntensities}
 											intensity={practice.carbonIntensity}
@@ -358,9 +413,13 @@
 			</div>
 		</div>
 
-		<div class="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center bg-[linear-gradient(180deg,rgba(244,241,234,0)_0%,rgba(244,241,234,0.88)_32%,rgba(244,241,234,0.98)_100%)] px-4 pb-4 pt-8 sm:px-6 sm:pb-6">
+		<div
+			class="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center bg-[linear-gradient(180deg,rgba(244,241,234,0)_0%,rgba(244,241,234,0.88)_32%,rgba(244,241,234,0.98)_100%)] px-4 pb-4 pt-8 sm:px-6 sm:pb-6"
+		>
 			{#if currentPractice}
-				<div class="pointer-events-auto flex w-full max-w-[min(100%,32rem)] flex-col items-center gap-3">
+				<div
+					class="pointer-events-auto flex w-full max-w-[min(100%,32rem)] flex-col items-center gap-3"
+				>
 					<Button
 						bind:element={currentCard}
 						onpointerdown={beginDrag}
@@ -391,6 +450,14 @@
 					<Button onclick={toggleCarbonIntensities} aria-pressed={showCarbonIntensities}>
 						{showCarbonIntensities ? text.hideCarbonIntensities : text.showCarbonIntensities}
 					</Button>
+					<CopyClipboardButton
+						value={clipboardExport}
+						idleLabel={text.copyPlacements}
+						successLabel={text.copiedPlacements}
+						errorLabel={text.copyPlacementsFailed}
+						disabled={placedCount === 0}
+						class="shrink-0"
+					/>
 				</div>
 			{/if}
 		</div>
