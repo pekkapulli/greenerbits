@@ -3,7 +3,6 @@
 
 	interface Props {
 		practice: DigitalPractice;
-		order: number;
 		showCarbonIntensity?: boolean;
 		ringClass: string;
 		cardOutlineDot?: string;
@@ -12,7 +11,6 @@
 
 	let {
 		practice,
-		order,
 		showCarbonIntensity = false,
 		ringClass,
 		cardOutlineDot = 'bg-white',
@@ -35,36 +33,29 @@
 			: 'transition-delay: 0ms;'}
 	>
 		<div class="flip-face col-start-1 row-start-1">
-			<div class="mb-3 flex items-center justify-between gap-3">
-				<span class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-500">
-					{order + 1}
-				</span>
-			</div>
-			<p class="text-lg leading-tight text-stone-900 sm:text-xl" style="font-family: Georgia, 'Times New Roman', serif;">
+			<p class="text-md leading-tight text-stone-900 sm:text-lg" style="font-family: Georgia, 'Times New Roman', serif;">
 				{practice.label}
 			</p>
 		</div>
 
 		<div class="flip-face flip-face-back col-start-1 row-start-1">
-			<div class="mb-3 flex items-center justify-between gap-3">
-				<span class="text-[11px] font-semibold uppercase tracking-[0.26em] text-stone-500">
-					{order + 1}
-				</span>
-				<span class="text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-500">
-					Relative carbon intensity
-				</span>
-			</div>
-			<p class="text-lg leading-tight text-stone-900 sm:text-xl" style="font-family: Georgia, 'Times New Roman', serif;">
+			<p class="text-md leading-tight text-stone-900 sm:text-lg" style="font-family: Georgia, 'Times New Roman', serif;">
 				{practice.label}
 			</p>
-			<div
-				class="mt-4 flex items-center gap-2 text-2xl"
-				aria-label={`Relative carbon intensity ${practice.carbonIntensity} of 3`}
-			>
-				{#each fireLevels as level (level)}
-					<span class:opacity-20={level > practice.carbonIntensity}>🔥</span>
-				{/each}
-			</div>
+      {#if showCarbonIntensity}
+      <div class="flip-face flip-face-back col-start-1 row-start-1"><span class="text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-500">
+					Relative carbon intensity
+				</span></div>
+        <div
+          class="mt-4 flex items-center gap-2 text-2xl"
+          aria-label={`Relative carbon intensity ${practice.carbonIntensity} of 3`}
+        >
+          {#each fireLevels as level (level)}
+            <span class:opacity-20={level > practice.carbonIntensity}>🔥</span>
+          {/each}
+        </div>  
+      {/if}
+			
 		</div>
 	</div>
 </div>

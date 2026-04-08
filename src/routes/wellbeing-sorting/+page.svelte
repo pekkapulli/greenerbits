@@ -22,15 +22,17 @@
 		3: { dot: 'bg-rose-500', ring: 'ring-1 ring-rose-500/20' }
 	};
 
-	const dragAnchorOffsetY = 10;
 	const cardOutlineDot = 'bg-white';
 	const slotHeightPx = 176;
+	const horizontalPlacementInsetPx = 72;
+	const horizontalDropBufferPx = 36;
 
 	let placedPractices: PlacedPractice[] = [];
 	let nextIndex = 0;
 	let canvas: HTMLElement | null = null;
 	let currentCard: HTMLButtonElement | null = null;
 	let showCarbonIntensities = false;
+	let showSortedByScore = false;
 	let isDragging = false;
 	let dragMode: 'current' | 'placed' | null = null;
 	let draggedPracticeId: string | null = null;
@@ -42,16 +44,22 @@
 
 	$: currentPractice = digitalPractices[nextIndex] ?? null;
 	$: placedCount = placedPractices.length;
+	$: sortedPractices = [...placedPractices].sort((left, right) => left.x - right.x || left.order - right.order);
+	$: visiblePractices = showSortedByScore ? sortedPractices : placedPractices;
 	$: totalSlots = currentPractice ? placedCount + 1 : placedCount;
 	$: slotIndexes = Array.from({ length: totalSlots }, (_, index) => index);
 	$: highlightedSlotIndex = !isDragging
 		? null
 		: dragMode === 'placed' && draggedPracticeId
-			? placedPractices.findIndex((practice) => practice.id === draggedPracticeId)
+			? visiblePractices.findIndex((practice) => practice.id === draggedPracticeId)
 			: nextIndex;
 	$: canRevealCarbonIntensities = placedCount === totalCount && totalCount > 0;
+	$: canSortByScore = placedCount > 1;
 	$: if (!canRevealCarbonIntensities && showCarbonIntensities) {
 		showCarbonIntensities = false;
+	}
+	$: if (!canSortByScore && showSortedByScore) {
+		showSortedByScore = false;
 	}
 
 	function clamp(value: number, min: number, max: number) {
@@ -66,6 +74,14 @@
 		showCarbonIntensities = !showCarbonIntensities;
 	}
 
+	function toggleSortedByScore() {
+		if (!canSortByScore) {
+			return;
+		}
+
+		showSortedByScore = !showSortedByScore;
+	}
+
 	function beginDrag(event: PointerEvent) {
 		const element = event.currentTarget;
 
@@ -76,8 +92,8 @@
 		currentCard = element;
 		const rect = currentCard.getBoundingClientRect();
 		dragWidth = rect.width;
-		pointerOffsetX = rect.width / 2;
-		pointerOffsetY = dragAnchorOffsetY;
+		pointerOffsetX = event.clientX - rect.left;
+		pointerOffsetY = event.clientY - rect.top;
 		dragX = rect.left;
 		dragY = rect.top;
 		isDragging = true;
@@ -95,8 +111,8 @@
 
 		const rect = element.getBoundingClientRect();
 		dragWidth = rect.width;
-		pointerOffsetX = rect.width / 2;
-		pointerOffsetY = dragAnchorOffsetY;
+		pointerOffsetX = event.clientX - rect.left;
+		pointerOffsetY = event.clientY - rect.top;
 		dragX = rect.left;
 		dragY = rect.top;
 		isDragging = true;
@@ -126,8 +142,8 @@
 		const left = event.clientX - pointerOffsetX;
 		const centerX = left - canvasRect.left + dragWidth / 2;
 		const insideCanvas =
-			event.clientX >= canvasRect.left &&
-			event.clientX <= canvasRect.right &&
+			event.clientX >= canvasRect.left - horizontalDropBufferPx &&
+			event.clientX <= canvasRect.right + horizontalDropBufferPx &&
 			event.clientY >= canvasRect.top &&
 			event.clientY <= canvasRect.bottom;
 
@@ -151,8 +167,7 @@
 			return;
 		}
 
-		const safeHalfWidth = dragWidth > 0 ? dragWidth / 2 : 144;
-		const x = clamp(centerX, safeHalfWidth + 16, width - safeHalfWidth - 16) / width;
+		const x = getPlacementX(centerX, width);
 
 		placedPractices = [...placedPractices, { ...currentPractice, x, order: nextIndex }];
 		nextIndex += 1;
@@ -165,12 +180,16 @@
 	}
 
 	function repositionPractice(practiceId: string, centerX: number, width: number) {
-		const safeHalfWidth = dragWidth > 0 ? dragWidth / 2 : 144;
-		const x = clamp(centerX, safeHalfWidth + 16, width - safeHalfWidth - 16) / width;
+		const x = getPlacementX(centerX, width);
 
 		placedPractices = placedPractices.map((practice) =>
 			practice.id === practiceId ? { ...practice, x } : practice
 		);
+	}
+
+	function getPlacementX(centerX: number, width: number) {
+		const inset = Math.min(horizontalPlacementInsetPx, width / 2);
+		return clamp(centerX, inset, width - inset) / width;
 	}
 
 	function scrollToSlot(slotIndex: number, behavior: ScrollBehavior = 'smooth') {
@@ -208,6 +227,7 @@
 		placedPractices = [];
 		nextIndex = 0;
 		showCarbonIntensities = false;
+		showSortedByScore = false;
 		isDragging = false;
 		dragMode = null;
 		draggedPracticeId = null;
@@ -261,7 +281,7 @@
 		</div>
 		<div class="mx-4 sm:mx-8">
 			<div
-				class="relative flex h-full flex-col overflow-hidden rounded-[2.5rem] border border-white/50 bg-white/18 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+				class="relative flex h-full flex-col overflow-visible rounded-[2.5rem] border border-white/50 bg-white/18 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
 			>
 				<div class="pointer-events-none absolute top-12 bottom-0 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,rgba(25,25,25,0.2)_0%,rgba(55,55,55,0.2)_100%)]"></div>
 				<div class="pointer-events-none absolute inset-y-0 left-[12.5%] w-px bg-white/25"></div>
@@ -278,7 +298,7 @@
 				<div class="relative flex-1">
 					<div bind:this={canvas} class="relative px-4 pb-24 pt-4 sm:px-6 sm:pb-28 sm:pt-5">
 						{#each slotIndexes as slotIndex (slotIndex)}
-							{@const practice = placedPractices[slotIndex]}
+							{@const practice = visiblePractices[slotIndex]}
 							<div
 								data-slot-index={slotIndex}
 								class="relative flex items-center"
@@ -306,7 +326,6 @@
 									>
 										<WellbeingPracticeCard
 											practice={practice}
-											order={practice.order}
 											showCarbonIntensity={showCarbonIntensities}
 											ringClass={intensityTone[practice.carbonIntensity].ring}
 											{cardOutlineDot}
@@ -333,12 +352,20 @@
 				>
 					<WellbeingPracticeCard
 						practice={currentPractice}
-						order={nextIndex}
 						ringClass={intensityTone[currentPractice.carbonIntensity].ring}
 						{cardOutlineDot}
 					/>
 				</button>
 			{:else if canRevealCarbonIntensities}
+				<div class="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
+					<button
+						type="button"
+						onclick={toggleSortedByScore}
+						aria-pressed={showSortedByScore}
+						class={`rounded-full border px-4 py-2 text-sm font-medium backdrop-blur transition ${showSortedByScore ? 'border-stone-700/20 bg-stone-900 text-white hover:bg-stone-800' : 'border-white/70 bg-white/70 text-stone-700 hover:bg-white'}`}
+					>
+						{showSortedByScore ? 'Show placement order' : 'Sort by score'}
+					</button>
 					<button
 						type="button"
 						onclick={toggleCarbonIntensities}
@@ -349,6 +376,7 @@
 							? 'Hide carbon intensities'
 							: '🔥 Show carbon intensities'}
 					</button>
+				</div>
 			{/if}
 		</div>
 	</section>
@@ -360,7 +388,6 @@
 		>
 			<WellbeingPracticeCard
 				practice={currentPractice}
-				order={nextIndex}
 				ringClass={intensityTone[currentPractice.carbonIntensity].ring}
 				{cardOutlineDot}
 			/>
@@ -376,7 +403,6 @@
 			>
 				<WellbeingPracticeCard
 					practice={draggedPractice}
-					order={draggedPractice.order}
 					showCarbonIntensity={showCarbonIntensities}
 					ringClass={intensityTone[draggedPractice.carbonIntensity].ring}
 					{cardOutlineDot}
