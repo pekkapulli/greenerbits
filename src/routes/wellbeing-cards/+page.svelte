@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { digitalPractices, type DigitalPractice } from '$lib/digitalPractices';
-	import WellbeingPracticeCard from '$lib/WellbeingPracticeCard.svelte';
+	import Button from '$lib/wellbeing-cards/Button.svelte';
+	import WellbeingPracticeCard from '$lib/wellbeing-cards/WellbeingPracticeCard.svelte';
 	import {
 		getWellbeingSortingMessages,
 		wellbeingSortingLocale,
 		wellbeingSortingLocaleOptions
-	} from '$lib/wellbeingSortingI18n';
+	} from '$lib/wellbeing-cards/wellbeingSortingI18n';
 
 	interface PlacedPractice extends DigitalPractice {
 		x: number;
 		order: number;
+		skipped: boolean;
 	}
 
 	const totalCount = digitalPractices.length;
@@ -19,6 +21,7 @@
 	const slotHeightPx = 176;
 	const horizontalPlacementInsetPx = 72;
 	const horizontalDropBufferPx = 36;
+	const neutralPlacementX = 0.5;
 
 	let placedPractices: PlacedPractice[] = [];
 	let nextIndex = 0;
@@ -162,13 +165,19 @@
 	}
 
 	async function placeCurrentPractice(centerX: number, width: number) {
+		await placePractice(getPlacementX(centerX, width), false);
+	}
+
+	async function skipCurrentPractice() {
+		await placePractice(neutralPlacementX, true);
+	}
+
+	async function placePractice(x: number, skipped: boolean) {
 		if (!currentPractice) {
 			return;
 		}
 
-		const x = getPlacementX(centerX, width);
-
-		placedPractices = [...placedPractices, { ...currentPractice, x, order: nextIndex }];
+		placedPractices = [...placedPractices, { ...currentPractice, x, order: nextIndex, skipped }];
 		nextIndex += 1;
 
 		await tick();
@@ -182,7 +191,7 @@
 		const x = getPlacementX(centerX, width);
 
 		placedPractices = placedPractices.map((practice) =>
-			practice.id === practiceId ? { ...practice, x } : practice
+			practice.id === practiceId ? { ...practice, x, skipped: false } : practice
 		);
 	}
 
@@ -279,22 +288,12 @@
 				>
 					{placedCount}/{totalCount}
 				</div>
-				<button
-					type="button"
-					onclick={undoLastPlacement}
-					disabled={placedPractices.length === 0}
-					class="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
-				>
+				<Button onclick={undoLastPlacement} disabled={placedPractices.length === 0}>
 					{text.undo}
-				</button>
-				<button
-					type="button"
-					onclick={resetCanvas}
-					disabled={placedPractices.length === 0 && !currentPractice}
-					class="rounded-full border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
-				>
+				</Button>
+				<Button onclick={resetCanvas} disabled={placedPractices.length === 0 && !currentPractice}>
 					{text.reset}
-				</button>
+				</Button>
 			</div>
 		</div>
 		<div class="mx-4 sm:mx-8">
@@ -348,6 +347,7 @@
 											showCarbonIntensity={showCarbonIntensities}
 											intensity={practice.carbonIntensity}
 											delayedRevealMs={Math.min(practice.order * 45, 360)}
+											skipped={practice.skipped}
 										/>
 									</article>
 								{/if}
@@ -360,38 +360,37 @@
 
 		<div class="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center bg-[linear-gradient(180deg,rgba(244,241,234,0)_0%,rgba(244,241,234,0.88)_32%,rgba(244,241,234,0.98)_100%)] px-4 pb-4 pt-8 sm:px-6 sm:pb-6">
 			{#if currentPractice}
-				<button
-					bind:this={currentCard}
-					type="button"
-					onpointerdown={beginDrag}
-					class:opacity-0={isDragging && dragMode === 'current'}
-					class="pointer-events-auto w-[min(18rem,calc(100vw-2.5rem))] text-left"
-					style="touch-action: none;"
-				>
-					<WellbeingPracticeCard
-						practice={currentPractice}
-						locale={$wellbeingSortingLocale}
-						intensity={currentPractice.carbonIntensity}
-					/>
-				</button>
+				<div class="pointer-events-auto flex w-full max-w-[min(100%,32rem)] flex-col items-center gap-3">
+					<Button
+						bind:element={currentCard}
+						onpointerdown={beginDrag}
+						variant="bare"
+						size="none"
+						class={`w-[min(18rem,calc(100vw-2.5rem))] text-left ${isDragging && dragMode === 'current' ? 'opacity-0' : ''}`}
+						style="touch-action: none;"
+					>
+						<WellbeingPracticeCard
+							practice={currentPractice}
+							locale={$wellbeingSortingLocale}
+							intensity={currentPractice.carbonIntensity}
+						/>
+					</Button>
+					<Button onclick={skipCurrentPractice} size="lg" class="bg-white/76">
+						{text.notRelevant}
+					</Button>
+				</div>
 			{:else if canRevealCarbonIntensities}
 				<div class="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-					<button
-						type="button"
+					<Button
 						onclick={toggleSortedByScore}
 						aria-pressed={showSortedByScore}
-						class={`rounded-full border px-4 py-2 text-sm font-medium backdrop-blur transition ${showSortedByScore ? 'border-stone-700/20 bg-stone-900 text-white hover:bg-stone-800' : 'border-white/70 bg-white/70 text-stone-700 hover:bg-white'}`}
+						variant={showSortedByScore ? 'solid' : 'glass'}
 					>
 						{showSortedByScore ? text.showPlacementOrder : text.sortByScore}
-					</button>
-					<button
-						type="button"
-						onclick={toggleCarbonIntensities}
-						aria-pressed={showCarbonIntensities}
-						class="pointer-events-auto rounded-full cursor-pointer border border-white/70 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white"
-					>
+					</Button>
+					<Button onclick={toggleCarbonIntensities} aria-pressed={showCarbonIntensities}>
 						{showCarbonIntensities ? text.hideCarbonIntensities : text.showCarbonIntensities}
-					</button>
+					</Button>
 				</div>
 			{/if}
 		</div>
@@ -423,6 +422,7 @@
 					showCarbonIntensity={showCarbonIntensities}
 					intensity={draggedPractice.carbonIntensity}
 					delayedRevealMs={Math.min(draggedPractice.order * 45, 360)}
+					skipped={draggedPractice.skipped}
 				/>
 			</div>
 		{/if}

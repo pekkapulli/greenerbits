@@ -9,6 +9,7 @@ interface WellbeingSortingMessages {
 	pageTitle: string;
 	pageDescription: string;
 	progressLabel: (placedCount: number, totalCount: number) => string;
+	notRelevant: string;
 	undo: string;
 	reset: string;
 	axisNegative: string;
@@ -34,6 +35,7 @@ const messages: Record<WellbeingSortingLocale, WellbeingSortingMessages> = {
 		pageTitle: 'Digital practices and wellbeing',
 		pageDescription: 'Rate how you think different digital practices affect your wellbeing.',
 		progressLabel: (placedCount, totalCount) => `${placedCount} of ${totalCount} practices placed`,
+		notRelevant: 'Not relevant',
 		undo: 'Undo',
 		reset: 'Reset',
 		axisNegative: 'Negative effect on wellbeing',
@@ -50,6 +52,7 @@ const messages: Record<WellbeingSortingLocale, WellbeingSortingMessages> = {
 		pageTitle: 'Digitaaliset käytännöt ja hyvinvointi',
 		pageDescription: 'Arvioi, miten eri digitaaliset käytännöt mielestäsi vaikuttavat hyvinvointiisi.',
 		progressLabel: (placedCount, totalCount) => `${placedCount}/${totalCount} käytäntöä sijoitettu`,
+		notRelevant: 'Ei relevantti',
 		undo: 'Peru',
 		reset: 'Nollaa',
 		axisNegative: 'Kielteinen vaikutus hyvinvointiin',

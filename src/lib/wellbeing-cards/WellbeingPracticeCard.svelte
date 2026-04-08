@@ -3,7 +3,7 @@
 	import {
 		getWellbeingSortingMessages,
 		type WellbeingSortingLocale
-	} from '$lib/wellbeingSortingI18n';
+	} from '$lib/wellbeing-cards/wellbeingSortingI18n';
 
 	interface Props {
 		practice: DigitalPractice;
@@ -11,6 +11,7 @@
 		showCarbonIntensity?: boolean;
 		intensity: CarbonIntensity;
 		delayedRevealMs?: number;
+		skipped?: boolean;
 	}
 
 	let {
@@ -18,7 +19,8 @@
 		locale = 'en',
 		showCarbonIntensity = false,
 		intensity = 1,
-		delayedRevealMs = 0
+		delayedRevealMs = 0,
+		skipped = false
 	}: Props = $props();
 
 	const fireLevels: CarbonIntensity[] = [3, 2, 1];
@@ -35,7 +37,7 @@
 	const dotClass = $derived(showCarbonIntensity ? intensityTone[intensity].dot : 'bg-white');
 </script>
 
-<div class={`relative w-full rounded-[1.7rem] border border-white/80 bg-white/95 pb-4 pl-4 pr-3 pt-6 shadow-[0_18px_45px_rgba(45,38,58,0.16)] ${showCarbonIntensity ? ringClass : ''}`}>
+<div class={`relative w-full rounded-[1.7rem] border border-white/80 bg-white/95 pb-4 pl-4 pr-3 pt-6 shadow-[0_18px_45px_rgba(45,38,58,0.16)] transition-opacity ${showCarbonIntensity ? ringClass : ''} ${skipped ? 'opacity-30' : 'opacity-100'}`}>
 	<div class="pointer-events-none absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
 		<span class={`h-3.5 w-3.5 rounded-full shadow-sm ${ringClass} ${dotClass}`}></span>
 	</div>
