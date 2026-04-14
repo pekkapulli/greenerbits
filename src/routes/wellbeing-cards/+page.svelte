@@ -18,6 +18,7 @@
 
 	const totalCount = digitalPractices.length;
 	const languageSelectorId = 'wellbeing-sorting-language';
+	const intervieweeIdInputId = 'wellbeing-sorting-interviewee-id';
 
 	const slotHeightPx = 176;
 	const horizontalPlacementInsetPx = 72;
@@ -40,6 +41,8 @@
 	let dragWidth = 0;
 	let pointerOffsetX = 0;
 	let pointerOffsetY = 0;
+	let showFixedAxisLabels = false;
+	let intervieweeId = '';
 
 	$: currentPractice = digitalPractices[nextIndex] ?? null;
 	$: text = getWellbeingSortingMessages($wellbeingSortingLocale);
@@ -55,6 +58,7 @@
 	$: visiblePractices = showSortedByScore ? sortedPractices : placedPractices;
 	$: clipboardExport = JSON.stringify(
 		{
+			intervieweeId: intervieweeId.trim() || null,
 			placements: placedPractices.map(({ id, x, skipped }) => ({
 				id,
 				x: clamp(x, minPlacementX, maxPlacementX),
@@ -64,6 +68,7 @@
 		null,
 		2
 	);
+	$: emailHref = `mailto:?subject=${encodeURIComponent(text.emailSubject)}&body=${encodeURIComponent(clipboardExport)}`;
 	$: totalSlots = currentPractice ? placedCount + 1 : placedCount;
 	$: slotIndexes = Array.from({ length: totalSlots }, (_, index) => index);
 	$: highlightedSlotIndex = !isDragging
@@ -190,6 +195,24 @@
 		draggedPracticeId = null;
 	}
 
+	function observeAxisLabelsSentinel(node: HTMLElement) {
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				showFixedAxisLabels = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+			},
+			{ threshold: 0 }
+		);
+
+		observer.observe(node);
+
+		return {
+			destroy() {
+				observer.disconnect();
+				showFixedAxisLabels = false;
+			}
+		};
+	}
+
 	async function placeCurrentPractice(centerX: number, width: number) {
 		await placePractice(getNormalizedPlacementX(centerX, width), false);
 	}
@@ -261,6 +284,7 @@
 	async function resetCanvas() {
 		placedPractices = [];
 		nextIndex = 0;
+		intervieweeId = '';
 		showCarbonIntensities = false;
 		showSortedByScore = false;
 		isDragging = false;
@@ -271,11 +295,19 @@
 
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
+
+	function sendAsEmail() {
+		if (placedCount === 0) {
+			return;
+		}
+
+		window.location.href = emailHref;
+	}
 </script>
 
 <svelte:window onpointermove={handlePointerMove} onpointerup={handlePointerUp} />
 
-<div class="relative min-h-screen overflow-x-hidden bg-[#f4f1ea] text-stone-900">
+<div class="relative min-h-screen bg-[#f4f1ea] text-stone-900">
 	<div
 		class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.8),_transparent_40%),linear-gradient(90deg,rgba(99,60,176,0.22)_0%,rgba(153,118,219,0.12)_24%,rgba(255,255,255,0.62)_50%,rgba(148,211,163,0.16)_76%,rgba(44,145,95,0.24)_100%)]"
 	></div>
@@ -283,7 +315,7 @@
 		class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] opacity-35"
 	></div>
 
-	<section class="relative min-h-screen overflow-x-hidden pb-28 sm:pb-32">
+	<section class="relative min-h-screen pb-28 sm:pb-32">
 		<div
 			class="inset-x-0 top-0 z-20 flex justify-end gap-4 px-4 pt-4 flex-col-reverse sm:flex-row sm:px-6 sm:pt-6"
 		>
@@ -341,6 +373,19 @@
 				</Button>
 			</div>
 		</div>
+
+		<div use:observeAxisLabelsSentinel class="h-px w-full" aria-hidden="true"></div>
+
+		<div class="mx-4 px-4 pb-2 pt-5 sm:mx-8 sm:px-6 sm:pt-6">
+			<div
+				class="grid grid-cols-3 gap-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-600 sm:text-xs"
+			>
+				{#each axisLabels as axisLabel (axisLabel.id)}
+					<p class={axisLabel.align}>{axisLabel.label}</p>
+				{/each}
+			</div>
+		</div>
+
 		<div class="mx-4 sm:mx-8">
 			<div
 				class="relative flex h-full flex-col overflow-visible rounded-[2.5rem] border border-white/50 bg-white/18 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
@@ -350,16 +395,6 @@
 				></div>
 				<div class="pointer-events-none absolute inset-y-0 left-[12.5%] w-px bg-white/25"></div>
 				<div class="pointer-events-none absolute inset-y-0 right-[12.5%] w-px bg-white/25"></div>
-
-				<div class="pointer-events-none relative z-10 px-4 pb-2 pt-5 sm:px-6 sm:pt-6">
-					<div
-						class="grid grid-cols-3 gap-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-600 sm:text-xs"
-					>
-						{#each axisLabels as axisLabel (axisLabel.id)}
-							<p class={axisLabel.align}>{axisLabel.label}</p>
-						{/each}
-					</div>
-				</div>
 
 				<div class="relative flex-1">
 					<div bind:this={canvas} class="relative px-4 pb-24 pt-4 sm:px-6 sm:pb-28 sm:pt-5">
@@ -439,29 +474,69 @@
 					</Button>
 				</div>
 			{:else if canRevealCarbonIntensities}
-				<div class="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-					<Button
-						onclick={toggleSortedByScore}
-						aria-pressed={showSortedByScore}
-						variant={showSortedByScore ? 'solid' : 'glass'}
-					>
-						{showSortedByScore ? text.showPlacementOrder : text.sortByScore}
-					</Button>
-					<Button onclick={toggleCarbonIntensities} aria-pressed={showCarbonIntensities}>
-						{showCarbonIntensities ? text.hideCarbonIntensities : text.showCarbonIntensities}
-					</Button>
-					<CopyClipboardButton
-						value={clipboardExport}
-						idleLabel={text.copyPlacements}
-						successLabel={text.copiedPlacements}
-						errorLabel={text.copyPlacementsFailed}
-						disabled={placedCount === 0}
-						class="shrink-0"
-					/>
+				<div class="pointer-events-auto flex w-full max-w-[min(100%,52rem)] flex-col gap-2">
+					<div class="flex flex-wrap items-center justify-center gap-2">
+						<Button
+							onclick={toggleSortedByScore}
+							aria-pressed={showSortedByScore}
+							variant={showSortedByScore ? 'solid' : 'glass'}
+						>
+							{showSortedByScore ? text.showPlacementOrder : text.sortByScore}
+						</Button>
+						<Button onclick={toggleCarbonIntensities} aria-pressed={showCarbonIntensities}>
+							{showCarbonIntensities ? text.hideCarbonIntensities : text.showCarbonIntensities}
+						</Button>
+					</div>
+					<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+						<div class="w-full sm:max-w-xs">
+							<label
+								for={intervieweeIdInputId}
+								class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-stone-600"
+							>
+								{text.intervieweeIdLabel}
+							</label>
+							<input
+								id={intervieweeIdInputId}
+								type="text"
+								bind:value={intervieweeId}
+								placeholder={text.intervieweeIdPlaceholder}
+								class="w-full rounded-full border border-white/70 bg-white/76 px-4 py-2 text-sm text-stone-800 outline-none transition focus:border-stone-400"
+							/>
+						</div>
+						<div class="flex flex-wrap items-center gap-2 sm:justify-end">
+							<CopyClipboardButton
+								value={clipboardExport}
+								idleLabel={text.copyPlacements}
+								successLabel={text.copiedPlacements}
+								errorLabel={text.copyPlacementsFailed}
+								disabled={placedCount === 0}
+								class="shrink-0"
+							/>
+							<Button onclick={sendAsEmail} disabled={placedCount === 0} class="shrink-0">
+								{text.sendAsEmail}
+							</Button>
+						</div>
+					</div>
 				</div>
 			{/if}
 		</div>
 	</section>
+
+	{#if showFixedAxisLabels}
+		<div
+			class="pointer-events-none fixed inset-x-0 top-0 z-40 bg-[linear-gradient(180deg,rgba(244,241,234,0.98)_0%,rgba(244,241,234,0.88)_68%,rgba(244,241,234,0)_100%)]"
+		>
+			<div class="mx-4 px-4 pb-2 pt-5 sm:mx-8 sm:px-6 sm:pt-6">
+				<div
+					class="grid grid-cols-3 gap-4 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-600 sm:text-xs"
+				>
+					{#each axisLabels as axisLabel (axisLabel.id)}
+						<p class={axisLabel.align}>{axisLabel.label}</p>
+					{/each}
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	{#if isDragging && dragMode === 'current' && currentPractice}
 		<div

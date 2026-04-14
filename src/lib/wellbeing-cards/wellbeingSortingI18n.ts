@@ -9,9 +9,13 @@ interface WellbeingSortingMessages {
 	pageTitle: string;
 	pageDescription: string;
 	progressLabel: (placedCount: number, totalCount: number) => string;
+	intervieweeIdLabel: string;
+	intervieweeIdPlaceholder: string;
 	copyPlacements: string;
 	copiedPlacements: string;
 	copyPlacementsFailed: string;
+	sendAsEmail: string;
+	emailSubject: string;
 	notRelevant: string;
 	undo: string;
 	reset: string;
@@ -38,9 +42,13 @@ const messages: Record<WellbeingSortingLocale, WellbeingSortingMessages> = {
 		pageTitle: 'Digital practices and wellbeing',
 		pageDescription: 'Rate how you think different digital practices affect your wellbeing.',
 		progressLabel: (placedCount, totalCount) => `${placedCount} of ${totalCount} practices placed`,
-		copyPlacements: 'Copy placements',
+		intervieweeIdLabel: 'Interviewee ID',
+		intervieweeIdPlaceholder: 'Enter ID',
+		copyPlacements: 'Copy to clipboard',
 		copiedPlacements: 'Copied',
 		copyPlacementsFailed: 'Copy failed',
+		sendAsEmail: 'Send as email',
+		emailSubject: 'Wellbeing sorting placements',
 		notRelevant: 'Not relevant',
 		undo: 'Undo',
 		reset: 'Reset',
@@ -56,11 +64,16 @@ const messages: Record<WellbeingSortingLocale, WellbeingSortingMessages> = {
 	fi: {
 		languageLabel: 'Language / Kieli',
 		pageTitle: 'Digitaaliset käytännöt ja hyvinvointi',
-		pageDescription: 'Arvioi, miten eri digitaaliset käytännöt mielestäsi vaikuttavat hyvinvointiisi.',
+		pageDescription:
+			'Arvioi, miten eri digitaaliset käytännöt mielestäsi vaikuttavat hyvinvointiisi.',
 		progressLabel: (placedCount, totalCount) => `${placedCount}/${totalCount} käytäntöä sijoitettu`,
-		copyPlacements: 'Kopioi sijoittelut',
+		intervieweeIdLabel: 'Haastateltavan tunniste',
+		intervieweeIdPlaceholder: 'Syötä tunniste',
+		copyPlacements: 'Kopioi leikepöydälle',
 		copiedPlacements: 'Kopioitu',
 		copyPlacementsFailed: 'Kopiointi epäonnistui',
+		sendAsEmail: 'Lähetä sähköpostina',
+		emailSubject: 'Hyvinvointisijoittelun tulokset',
 		notRelevant: 'Ei relevantti',
 		undo: 'Peru',
 		reset: 'Nollaa',
