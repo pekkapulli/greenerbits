@@ -15,152 +15,24 @@ export const digitalPractices: DigitalPractice[] = [
 	{
 		id: 'multiple-devices',
 		label: {
-			en: 'Forced to use multiple devices (e.g. phones)',
-			fi: 'Pakko käyttää useita laitteita (esim. puhelimia)'
+			en: 'Having multiple devices (e.g. phones)',
+			fi: 'Usean eri laitteen käyttö'
 		},
 		carbonIntensity: 2
-	},
-	{
-		id: 'collecting-watchlists',
-		label: {
-			en: 'Collecting a list of things to read or watch',
-			fi: 'Kokoan listaa luettavista tai katsottavista asioista'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'videoconferencing',
-		label: {
-			en: 'Videoconferencing',
-			fi: 'Videokokoukset'
-		},
-		carbonIntensity: 3
-	},
-	{
-		id: 'video-ads-social',
-		label: {
-			en: 'Forced to view video ads on social media',
-			fi: 'Pakotetaan katsomaan videomainoksia sosiaalisessa mediassa'
-		},
-		carbonIntensity: 2
-	},
-	{
-		id: 'scrolling-social-media',
-		label: {
-			en: 'Scrolling social media',
-			fi: 'Sosiaalisen median selailu'
-		},
-		carbonIntensity: 2
-	},
-	{
-		id: 'instant-messaging-groups',
-		label: {
-			en: 'Instant messaging groups',
-			fi: 'Pikaviestiryhmät'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'too-many-photos',
-		label: {
-			en: 'Storing too many photos',
-			fi: 'Liian monen valokuvan tallentaminen'
-		},
-		carbonIntensity: 2
-	},
-	{
-		id: 'audio-books',
-		label: {
-			en: 'Listening to audio books',
-			fi: 'Äänikirjojen kuuntelu'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'search-engine',
-		label: {
-			en: 'Searching for information (with a search engine)',
-			fi: 'Tiedon etsiminen hakukoneella'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'algorithmic-recommendations',
-		label: {
-			en: 'Viewing content recommended by algorithm',
-			fi: 'Algoritmin suositteleman sisällön katselu'
-		},
-		carbonIntensity: 2
-	},
-	{
-		id: 'work-reading-after-hours',
-		label: {
-			en: 'Reading work-related things outside work hours',
-			fi: 'Työhön liittyvien asioiden lukeminen työajan ulkopuolella'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'reading-emails',
-		label: {
-			en: 'Reading emails',
-			fi: 'Sähköpostien lukeminen'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'mobile-games',
-		label: {
-			en: 'Playing mobile games',
-			fi: 'Mobiilipelien pelaaminen'
-		},
-		carbonIntensity: 2
-	},
-	{
-		id: 'long-videos',
-		label: {
-			en: 'Viewing long videos online',
-			fi: 'Pitkien videoiden katselu verkossa'
-		},
-		carbonIntensity: 3
-	},
-	{
-		id: 'short-videos',
-		label: {
-			en: 'Viewing short videos on social media',
-			fi: 'Lyhyiden videoiden katselu sosiaalisessa mediassa'
-		},
-		carbonIntensity: 3
-	},
-	{
-		id: 'podcasts',
-		label: {
-			en: 'Listening to podcasts',
-			fi: 'Podcastien kuuntelu'
-		},
-		carbonIntensity: 1
-	},
-	{
-		id: 'streaming-services',
-		label: {
-			en: 'Viewing streaming services',
-			fi: 'Suoratoistopalvelujen katselu'
-		},
-		carbonIntensity: 3
 	},
 	{
 		id: 'dual-screening',
 		label: {
 			en: 'Multitasking / dual-screening',
-			fi: 'Moniajo / kahden ruudun käyttö'
+			fi: 'Usean ruudun samanaikainen käyttö'
 		},
 		carbonIntensity: 2
 	},
 	{
 		id: 'multiple-it-systems',
 		label: {
-			en: 'Using several IT systems for work',
-			fi: 'Useiden IT-järjestelmien käyttö työssä'
+			en: 'Using several IT systems',
+			fi: 'Erilaisten asiointijärjestelmien käyttö'
 		},
 		carbonIntensity: 1
 	},
@@ -168,16 +40,136 @@ export const digitalPractices: DigitalPractice[] = [
 		id: 'managing-files',
 		label: {
 			en: 'Managing files on my device',
-			fi: 'Tiedostojen hallinta omalla laitteella'
+			fi: 'Tiedostojen hallinnointi laitteilla'
 		},
 		carbonIntensity: 1
 	},
 	{
-		id: 'sorting-spam',
+		id: 'too-many-photos',
 		label: {
-			en: 'Sorting spam/scam emails',
-			fi: 'Roska- ja huijaussähköpostien lajittelu'
+			en: 'Storing too many photos',
+			fi: 'Digitaalisten valokuvien varastointi'
+		},
+		carbonIntensity: 2
+	},
+	{
+		id: 'search-engine',
+		label: {
+			en: 'Searching for information (with a search engine)',
+			fi: 'Tiedon etsintä hakukoneella'
 		},
 		carbonIntensity: 1
+	},
+	{
+		id: 'collecting-watchlists',
+		label: {
+			en: 'Collecting a list of things to read or watch',
+			fi: 'Katselu-, kuuntelu- ja lukulistojen kerääminen'
+		},
+		carbonIntensity: 1
+	},
+	{
+		id: 'reading-emails',
+		label: {
+			en: 'Reading and sorting emails',
+			fi: 'Viestiminen sähköpostilla'
+		},
+		carbonIntensity: 1
+	},
+	{
+		id: 'instant-messaging-groups',
+		label: {
+			en: 'Instant messaging groups',
+			fi: 'Viestiminen pikaviestiryhmissä'
+		},
+		carbonIntensity: 1
+	},
+	{
+		id: 'reading-news-online',
+		label: {
+			en: 'Reading the news online',
+			fi: 'Uutispalveluiden seuraaminen'
+		},
+		carbonIntensity: 1
+	},
+	{
+		id: 'scrolling-social-media',
+		label: {
+			en: 'Scrolling updates on social media',
+			fi: 'Kontaktien päivitysten selailu sosiaalisessa mediassa'
+		},
+		carbonIntensity: 1
+	},
+	{
+		id: 'watching-visual-posts-social-media',
+		label: {
+			en: 'Watching visual posts on social media',
+			fi: 'Kuvasisältöjen selaaminen sosiaalisessa mediassa'
+		},
+		carbonIntensity: 2
+	},
+	{
+		id: 'podcasts-audio-content',
+		label: {
+			en: 'Listening to podcasts or other audio content',
+			fi: 'Podcastien tai muiden audiosisältöjen kuunteleminen'
+		},
+		carbonIntensity: 2
+	},
+	{
+		id: 'music-streaming-service',
+		label: {
+			en: 'Listening to music on a streaming service',
+			fi: 'Musiikin kuuntelu suoratoistopalveluista'
+		},
+		carbonIntensity: 2
+	},
+	{
+		id: 'short-videos',
+		label: {
+			en: 'Watching short videos on social media',
+			fi: 'Lyhyiden videosisältöjen selaaminen sosiaalisessa mediassa'
+		},
+		carbonIntensity: 3
+	},
+	{
+		id: 'streaming-services',
+		label: {
+			en: 'Watching streaming services',
+			fi: 'Videosisältöjen katselu suoratoistopalveluista'
+		},
+		carbonIntensity: 3
+	},
+	{
+		id: 'videoconferencing',
+		label: {
+			en: 'Videoconferencing',
+			fi: 'Osallistuminen videopuheluihin'
+		},
+		carbonIntensity: 3
+	},
+	{
+		id: 'digital-games',
+		label: {
+			en: 'Playing mobile games',
+			fi: 'Digitaalisten pelien pelaaminen'
+		},
+		carbonIntensity: 2
+	},
+	{
+		id: 'generating-text-ai',
+		label: {
+			en: 'Generating text with AI',
+			fi: 'Tekstin tuottaminen generatiivisella tekoälyä'
+		},
+		carbonIntensity: 2
+	},
+	{
+		id: 'generating-audiovisual-content-ai',
+		label: {
+			en: 'Generating audiovisual content with AI',
+			fi: 'Audiovisuaalisen sisällön luominen generatiivisella tekoälyllä'
+		},
+		carbonIntensity: 3
 	}
 ];
