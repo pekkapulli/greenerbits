@@ -53,7 +53,8 @@
 	] as const;
 	$: placedCount = placedPractices.length;
 	$: sortedPractices = [...placedPractices].sort(
-		(left, right) => left.x - right.x || left.order - right.order
+		(left, right) =>
+			Number(left.skipped) - Number(right.skipped) || left.x - right.x || left.order - right.order
 	);
 	$: visiblePractices = showSortedByScore ? sortedPractices : placedPractices;
 	$: clipboardExport = JSON.stringify(
@@ -107,12 +108,17 @@
 		showCarbonIntensities = !showCarbonIntensities;
 	}
 
-	function toggleSortedByScore() {
+	async function toggleSortedByScore() {
 		if (!canSortByScore) {
 			return;
 		}
 
 		showSortedByScore = !showSortedByScore;
+
+		if (showSortedByScore) {
+			await tick();
+			scrollToSlot(0, 'smooth');
+		}
 	}
 
 	function beginDrag(event: PointerEvent) {
