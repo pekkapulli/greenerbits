@@ -69,7 +69,7 @@
 		null,
 		2
 	);
-	$: emailHref = `mailto:?subject=${encodeURIComponent(text.emailSubject)}&body=${encodeURIComponent(clipboardExport)}`;
+	$: emailHref = `mailto:ilona.kousa@helsinki.fi?subject=${encodeURIComponent(text.emailSubject)}&body=${encodeURIComponent(clipboardExport)}`;
 	$: totalSlots = currentPractice ? placedCount + 1 : placedCount;
 	$: slotIndexes = Array.from({ length: totalSlots }, (_, index) => index);
 	$: highlightedSlotIndex = !isDragging
@@ -302,23 +302,16 @@
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
-	function sendAsEmail() {
-		if (placedCount === 0) {
-			return;
-		}
-
-		window.location.href = emailHref;
-	}
 </script>
 
 <svelte:window onpointermove={handlePointerMove} onpointerup={handlePointerUp} />
 
 <div class="relative min-h-screen bg-[#f4f1ea] text-stone-900">
 	<div
-		class="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.8),_transparent_40%),linear-gradient(90deg,rgba(99,60,176,0.22)_0%,rgba(153,118,219,0.12)_24%,rgba(255,255,255,0.62)_50%,rgba(148,211,163,0.16)_76%,rgba(44,145,95,0.24)_100%)]"
+		class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.8),transparent_40%),linear-gradient(90deg,rgba(99,60,176,0.22)_0%,rgba(153,118,219,0.12)_24%,rgba(255,255,255,0.62)_50%,rgba(148,211,163,0.16)_76%,rgba(44,145,95,0.24)_100%)]"
 	></div>
 	<div
-		class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] opacity-35"
+		class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-size-[4.5rem_4.5rem] opacity-35"
 	></div>
 
 	<section class="relative min-h-screen pb-28 sm:pb-32">
@@ -518,7 +511,7 @@
 								disabled={placedCount === 0}
 								class="shrink-0"
 							/>
-							<Button onclick={sendAsEmail} disabled={placedCount === 0} class="shrink-0">
+							<Button href={emailHref} disabled={placedCount === 0} class="shrink-0">
 								{text.sendAsEmail}
 							</Button>
 						</div>

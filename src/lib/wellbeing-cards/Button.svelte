@@ -5,11 +5,15 @@
 	type ButtonVariant = 'glass' | 'solid' | 'bare';
 	type ButtonSize = 'md' | 'lg' | 'none';
 
-	interface Props extends HTMLButtonAttributes {
+	interface Props extends Omit<HTMLButtonAttributes, 'onclick'> {
 		children?: Snippet;
 		variant?: ButtonVariant;
 		size?: ButtonSize;
 		element?: HTMLButtonElement | null;
+		onclick?: (event: MouseEvent) => void;
+		href?: string;
+		target?: string;
+		rel?: string;
 	}
 
 	let {
@@ -23,7 +27,10 @@
 		style = undefined,
 		onclick,
 		onpointerdown,
-		'aria-pressed': ariaPressed = undefined
+		'aria-pressed': ariaPressed = undefined,
+		href = undefined,
+		target = undefined,
+		rel = undefined
 	}: Props = $props();
 
 	const variantClasses: Record<ButtonVariant, string> = {
@@ -39,17 +46,46 @@
 		lg: 'px-5 py-3',
 		none: ''
 	};
+
+	const buttonClasses = $derived(
+		`${variantClasses[variant]} ${sizeClasses[size]} ${disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'} ${className}`.trim()
+	);
+
+	const anchorAttributes = $derived({
+		href: disabled ? undefined : href,
+		target,
+		rel: target === '_blank' ? (rel ?? 'noopener noreferrer') : rel,
+		style,
+		'aria-disabled': disabled,
+		class: buttonClasses
+	});
+
+	function handleAnchorClick(event: MouseEvent) {
+		if (disabled) {
+			event.preventDefault();
+			event.stopPropagation();
+			return;
+		}
+
+		onclick?.(event);
+	}
 </script>
 
-<button
-	bind:this={element}
-	{type}
-	{disabled}
-	{style}
-	{onclick}
-	{onpointerdown}
-	aria-pressed={ariaPressed}
-	class={`${variantClasses[variant]} ${sizeClasses[size]} cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${className}`.trim()}
->
-	{@render children?.()}
-</button>
+{#if href}
+	<a {...anchorAttributes} onclick={handleAnchorClick}>
+		{@render children?.()}
+	</a>
+{:else}
+	<button
+		bind:this={element}
+		{type}
+		{disabled}
+		{style}
+		{onclick}
+		{onpointerdown}
+		aria-pressed={ariaPressed}
+		class={buttonClasses}
+	>
+		{@render children?.()}
+	</button>
+{/if}
